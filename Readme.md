@@ -124,4 +124,7 @@ then chatgpt generate prompt
 
 ---
 
+<img width="1212" height="1518" alt="image" src="https://github.com/user-attachments/assets/d6179bc2-9170-4740-b18a-a1932794f3fe" />
+
+
 <img width="1212" height="1518" alt="image" src="https://github.com/user-attachments/assets/1a15f0a6-17c4-4512-a209-e6941c7c14fc" />
