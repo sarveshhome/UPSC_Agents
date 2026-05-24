@@ -1,0 +1,15 @@
+.quiz-page {
+  min-height: 100vh;
+  background: #f0f2ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.quiz-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 2rem;
+}
