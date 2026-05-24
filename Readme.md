@@ -120,3 +120,8 @@ JSON format sample is here:
 Generate the reverse prompt which i can use in programming and pass system prompt to LLM
 
 then chatgpt generate prompt 
+
+
+---
+
+<img width="1212" height="1518" alt="image" src="https://github.com/user-attachments/assets/1a15f0a6-17c4-4512-a209-e6941c7c14fc" />
