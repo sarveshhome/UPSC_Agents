@@ -3,8 +3,13 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class LoginRequest(BaseModel):
+class RegisterRequest(BaseModel):
     name: str
+    username: str
+    password: str
+
+
+class LoginRequest(BaseModel):
     username: str
     password: str
 
@@ -20,7 +25,7 @@ class AuthController:
         self.register_user = register_user
         self.authenticate_user = authenticate_user
 
-    def register(self, request: LoginRequest) -> dict:
+    def register(self, request: RegisterRequest) -> dict:
         user = self.register_user.execute(request.name, request.username, request.password)
         if user:
             return {"success": True, "message": "User registered successfully"}

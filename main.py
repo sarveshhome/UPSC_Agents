@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from llm import ask_llm
 from interface_adapters.gateways.database_gateway import SQLiteUserRepository, SQLiteSessionRepository
 from use_cases.auth import RegisterUser, AuthenticateUser
-from interface_adapters.controllers.auth_controller import AuthController, LoginRequest, LoginResponse
+from interface_adapters.controllers.auth_controller import AuthController, LoginRequest, LoginResponse, RegisterRequest
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -26,7 +26,7 @@ current_question: dict = {}
 
 
 @app.post("/register")
-def register(body: LoginRequest):
+def register(body: RegisterRequest):
     return auth_controller.register(body)
 
 

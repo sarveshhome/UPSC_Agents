@@ -1,0 +1,32 @@
+### Register User
+POST http://127.0.0.1:8000/register
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "username": "johndoe",
+    "password": "password123"
+}
+
+### Login User
+POST http://127.0.0.1:8000/login
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "username": "johndoe",
+    "password": "password123"
+}
+
+### Get Next Question (Authenticated)
+GET http://127.0.0.1:8000/next
+Authorization: Bearer {{token}}
+
+### Check Answer (Authenticated)
+POST http://127.0.0.1:8000/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "answer": "Option1"
+}
