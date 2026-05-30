@@ -1,47 +1,60 @@
-import json
-from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import cohere
 
 load_dotenv()
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from llm import ask_llm
+from interface_adapters.gateways.database_gateway import SQLiteUserRepository, SQLiteSessionRepository
+from use_cases.auth import RegisterUser, AuthenticateUser
+from interface_adapters.controllers.auth_controller import AuthController, LoginRequest, LoginResponse
+
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-client = cohere.ClientV2()
 
-PROMPT = Path("prompt.md").read_text()
+user_repo = SQLiteUserRepository()
+session_repo = SQLiteSessionRepository()
+register_user = RegisterUser(user_repo)
+authenticate_user = AuthenticateUser(user_repo, session_repo)
+auth_controller = AuthController(register_user, authenticate_user)
 
+security = HTTPBearer()
 current_question: dict = {}
 
 
-def ask_llm(user_message: str) -> dict:
-    response = client.chat(
-        model="command-r-08-2024",
-        messages=[
-            {"role": "system", "content": PROMPT},
-            {"role": "user", "content": user_message},
-        ],
-    )
-    return json.loads(response.message.content[0].text)
+@app.post("/register")
+def register(body: LoginRequest):
+    return auth_controller.register(body)
+
+
+@app.post("/login", response_model=LoginResponse)
+def login(body: LoginRequest):
+    return auth_controller.login(body)
+
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    if not session_repo.validate(token):
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return token
 
 
 @app.get("/next")
-def next_question():
+def next_question(current_user: str = Depends(get_current_user)):
     global current_question
     current_question = ask_llm("next")
     return current_question
 
 
 class AnswerRequest(BaseModel):
-    answer: str  # e.g. "Option1" or "Option1,Option3"
+    answer: str
 
 
 @app.post("/answer")
-def check_answer(body: AnswerRequest):
+def check_answer(body: AnswerRequest, current_user: str = Depends(get_current_user)):
     if not current_question:
         raise HTTPException(status_code=400, detail="No active question. Call /next first.")
 
