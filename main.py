@@ -2,8 +2,20 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
+
+from Lib.logging import setup_logging, get_logger
+
+# Initialize logging
+log_level = os.getenv("LOG_LEVEL", "INFO")
+log_file = os.getenv("LOG_FILE")  # Optional: e.g., "logs/app.log"
+setup_logging(log_level=log_level, log_file=log_file)
+
+logger = get_logger(__name__)
+logger.info("Logging initialized")
+logger.debug("Debug logging test")
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,18 +47,35 @@ def login(body: LoginRequest):
     return auth_controller.login(body)
 
 
+@app.post("/logout")
+def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    return auth_controller.logout(token)
+
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
+    logger.debug(f"Auth attempt - Token prefix: {token[:10] if token else 'None'}")
+    
     if not session_repo.validate(token):
+        logger.warning(f"Auth failed - Invalid token prefix: {token[:10] if token else 'None'}")
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+    
+    logger.info("Auth successful")
     return token
 
 
 @app.get("/next")
 def next_question(current_user: str = Depends(get_current_user)):
     global current_question
-    current_question = ask_llm("next")
-    return current_question
+    logger.info("Fetching next question for user")
+    try:
+        current_question = ask_llm("next")
+        logger.debug("Question fetched successfully")
+        return current_question
+    except Exception as e:
+        logger.error("LLM request failed", exc_info=True)
+        raise
 
 
 class AnswerRequest(BaseModel):

@@ -25,3 +25,7 @@ class SessionRepository(ABC):
     @abstractmethod
     def delete_expired(self) -> None:
         pass
+
+    @abstractmethod
+    def delete(self, token: str) -> None:
+        pass

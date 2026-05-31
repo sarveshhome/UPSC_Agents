@@ -36,3 +36,7 @@ class AuthController:
         if success:
             return LoginResponse(success=True, token=token, message="Login successful")
         return LoginResponse(success=False, message="Invalid credentials")
+
+    def logout(self, token: str) -> dict:
+        self.authenticate_user.logout(token)
+        return {"success": True, "message": "Logged out successfully"}

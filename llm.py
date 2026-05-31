@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import cohere
+from cohere.types.response_format_v2 import JsonObjectResponseFormatV2
 
 PROMPT = Path("prompt.md").read_text()
 MODEL = os.getenv("COHERE_MODEL", "command-r-08-2024")
@@ -20,5 +21,8 @@ def ask_llm(user_message: str) -> dict:
             {"role": "system", "content": PROMPT},
             {"role": "user", "content": user_message},
         ],
+        response_format=JsonObjectResponseFormatV2(type="json_object"),
     )
-    return json.loads(response.message.content[0].text)
+    content = response.message.content
+    text = content if isinstance(content, str) else content[0].text
+    return json.loads(text)

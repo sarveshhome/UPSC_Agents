@@ -36,6 +36,25 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/logout`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
@@ -77,6 +96,11 @@ const authSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.token = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem("token");
       });
   },
 });
