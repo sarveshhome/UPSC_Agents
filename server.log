@@ -1,0 +1,27 @@
+2026-05-30 22:02:03 - main - INFO - Logging initialized
+2026-05-30 22:02:03 - main - DEBUG - Debug logging test
+/Users/sarveshkumar/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [42447]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50616 - "OPTIONS /next HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50617 - "OPTIONS /next HTTP/1.1" 200 OK
+2026-05-30 22:12:14 - main - DEBUG - Auth attempt - Token prefix: 9ullM0kIls
+2026-05-30 22:12:14 - main - WARNING - Auth failed - Invalid token prefix: 9ullM0kIls
+INFO:     127.0.0.1:50617 - "GET /next HTTP/1.1" 401 Unauthorized
+2026-05-30 22:12:14 - main - DEBUG - Auth attempt - Token prefix: 9ullM0kIls
+2026-05-30 22:12:14 - main - WARNING - Auth failed - Invalid token prefix: 9ullM0kIls
+INFO:     127.0.0.1:50616 - "GET /next HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53270 - "POST /register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53420 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54694 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54789 - "GET /next HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55030 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55101 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55139 - "POST /login HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [42447]

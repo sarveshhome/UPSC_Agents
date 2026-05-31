@@ -69,21 +69,26 @@ class SQLiteSessionRepository(SessionRepository):
                 username TEXT NOT NULL,
                 token TEXT UNIQUE NOT NULL,
                 created_at TEXT NOT NULL,
-                expires_at TEXT NOT NULL
+                expires_at TEXT NOT NULL,
+                last_activity TEXT NOT NULL
             )
         """)
+        cursor.execute("PRAGMA table_info(sessions)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'last_activity' not in columns:
+            cursor.execute("ALTER TABLE sessions ADD COLUMN last_activity TEXT")
         conn.commit()
         conn.close()
 
     def create(self, username: str) -> str:
         token = secrets.token_urlsafe(32)
         now = datetime.utcnow()
-        expires_at = now + timedelta(minutes=5)
+        expires_at = now + timedelta(minutes=10)
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO sessions (username, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
-            (username, token, now.isoformat(), expires_at.isoformat()),
+            "INSERT INTO sessions (username, token, created_at, expires_at, last_activity) VALUES (?, ?, ?, ?, ?)",
+            (username, token, now.isoformat(), expires_at.isoformat(), now.isoformat()),
         )
         conn.commit()
         conn.close()
@@ -96,11 +101,21 @@ class SQLiteSessionRepository(SessionRepository):
             "SELECT expires_at FROM sessions WHERE token = ?", (token,)
         )
         session = cursor.fetchone()
-        conn.close()
-        if not session:
+        if not session or session[0] is None:
+            conn.close()
             return False
         expires_at = datetime.fromisoformat(session[0])
-        return datetime.utcnow() < expires_at
+        if datetime.utcnow() >= expires_at:
+            conn.close()
+            return False
+        now = datetime.utcnow()
+        cursor.execute(
+            "UPDATE sessions SET expires_at = ?, last_activity = ? WHERE token = ?",
+            ((now + timedelta(minutes=10)).isoformat(), now.isoformat(), token)
+        )
+        conn.commit()
+        conn.close()
+        return True
 
     def delete_expired(self) -> None:
         conn = sqlite3.connect(self.db_path)
@@ -109,5 +124,12 @@ class SQLiteSessionRepository(SessionRepository):
             "DELETE FROM sessions WHERE expires_at < ?",
             (datetime.utcnow().isoformat(),),
         )
+        conn.commit()
+        conn.close()
+
+    def delete(self, token: str) -> None:
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM sessions WHERE token = ?", (token,))
         conn.commit()
         conn.close()

@@ -25,3 +25,6 @@ class AuthenticateUser:
             return False, ""
         token = self.session_repo.create(username)
         return True, token
+
+    def logout(self, token: str) -> None:
+        self.session_repo.delete(token)
