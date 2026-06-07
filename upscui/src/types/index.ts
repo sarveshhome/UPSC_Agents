@@ -48,6 +48,8 @@ export type MainTabParamList = {
   Home: undefined;
   QuestionBank: undefined;
   Assessment: undefined;
+  Analytics: undefined;
+  CurrentAffairs: undefined;
   Profile: undefined;
   Settings: undefined;
 };
@@ -127,4 +129,74 @@ export type AssessmentTabParamList = {
   Search: undefined;
   Bookmarks: undefined;
   Notes: undefined;
+};
+
+// ── Phase 3: Analytics, Notifications, Current Affairs ───────
+
+export interface SubjectStat {
+  subject: string;
+  total: number;
+  correct: number;
+  accuracy: number;
+}
+
+export interface WeeklyReport {
+  week: string; // ISO week label e.g. "2025-W30"
+  totalAttempted: number;
+  accuracy: number;
+  avgScore: number;
+  subjectStats: SubjectStat[];
+}
+
+export interface MonthlyReport {
+  month: string; // e.g. "2025-07"
+  totalAttempted: number;
+  accuracy: number;
+  avgScore: number;
+  subjectStats: SubjectStat[];
+  weeklyBreakdown: WeeklyReport[];
+}
+
+export interface AnalyticsSummary {
+  overallAccuracy: number;
+  totalAttempted: number;
+  streak: number;
+  subjectStats: SubjectStat[];
+  weeklyReports: WeeklyReport[];
+  monthlyReports: MonthlyReport[];
+}
+
+export interface NotificationPrefs {
+  studyReminder: boolean;
+  studyReminderTime: string; // HH:MM
+  testReminder: boolean;
+  testReminderTime: string;
+  currentAffairs: boolean;
+}
+
+export interface CurrentAffairsArticle {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  subject: string;
+  date: string;
+}
+
+export interface CurrentAffairsQuiz {
+  id: string;
+  month: string;
+  questions: Question[];
+}
+
+export type AnalyticsStackParamList = {
+  Dashboard: undefined;
+  WeeklyReport: { week: string };
+  MonthlyReport: { month: string };
+};
+
+export type CurrentAffairsStackParamList = {
+  DailyFeed: undefined;
+  MonthlyCompilation: undefined;
+  CAQuiz: { month: string };
 };

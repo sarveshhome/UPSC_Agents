@@ -3,6 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 import { HomeNavigator } from './HomeNavigator';
 import { AssessmentNavigator } from './AssessmentNavigator';
+import { AnalyticsNavigator } from './AnalyticsNavigator';
+import { CurrentAffairsNavigator } from './CurrentAffairsNavigator';
 import { QuestionBankScreen } from '../features/questionBank/screens/QuestionBankScreen';
 import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
 import { SettingsScreen } from '../features/settings/screens/SettingsScreen';
@@ -29,6 +31,10 @@ export const MainNavigator: React.FC = () => (
         headerTintColor: '#fff' }} />
     <Tab.Screen name="Assessment" component={AssessmentNavigator}
       options={{ tabBarIcon: icon('🎯'), tabBarLabel: 'Assessment' }} />
+    <Tab.Screen name="Analytics" component={AnalyticsNavigator}
+      options={{ tabBarIcon: icon('📊'), tabBarLabel: 'Analytics' }} />
+    <Tab.Screen name="CurrentAffairs" component={CurrentAffairsNavigator}
+      options={{ tabBarIcon: icon('📰'), tabBarLabel: 'Current Affairs' }} />
     <Tab.Screen name="Profile" component={ProfileScreen}
       options={{ tabBarIcon: icon('👤'), tabBarLabel: 'Profile',
         headerShown: true, headerTitle: 'My Profile',
