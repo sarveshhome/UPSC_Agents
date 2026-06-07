@@ -114,6 +114,56 @@ export const upscApi = createApi({
     getCAQuiz: builder.query<CurrentAffairsQuiz, string>({
       query: month => `/current-affairs/quiz?month=${month}`,
     }),
+    // ── Phase 5: AI ───────────────────────────────────────
+    getAIRecommendations: builder.query<any, void>({
+      query: () => '/ai/recommendations',
+    }),
+    getAIPrediction: builder.query<any, void>({
+      query: () => '/ai/prediction',
+    }),
+    // ── Phase 5: Revision ─────────────────────────────────
+    getRevisionSchedule: builder.query<any, void>({
+      query: () => '/revision/schedule',
+    }),
+    addRevisionTopic: builder.mutation<any, { topic: string; subject: string; quality: number }>({
+      query: body => ({ url: '/revision/add', method: 'POST', body }),
+    }),
+    updateRevisionReview: builder.mutation<any, { id: string; topic: string; subject: string; quality: number }>({
+      query: ({ id, ...body }) => ({ url: `/revision/${id}/review`, method: 'PUT', body }),
+    }),
+    // ── Phase 5: Subscription ─────────────────────────────
+    getSubscriptionPlans: builder.query<any[], void>({
+      query: () => '/subscription/plans',
+    }),
+    getSubscriptionStatus: builder.query<any, void>({
+      query: () => '/subscription/status',
+    }),
+    subscribe: builder.mutation<any, { planId: string; razorpayOrderId?: string; razorpayPaymentId?: string }>({
+      query: body => ({ url: '/subscription/subscribe', method: 'POST', body }),
+    }),
+    // ── Phase 5: Offline ──────────────────────────────────
+    getOfflineQuestions: builder.query<any, number>({
+      query: count => `/offline/questions?count=${count}`,
+    }),
+    offlineSync: builder.mutation<any, { entity: string; payload: any[] }>({
+      query: body => ({ url: '/offline/sync', method: 'POST', body }),
+    }),
+    // ── Phase 5: Admin ────────────────────────────────────
+    getAdminQuestions: builder.query<any[], { subject?: string }>({
+      query: params => ({ url: '/admin/questions', params }),
+    }),
+    adminCreateQuestion: builder.mutation<any, { subject: string; topic?: string; difficulty: string; payload: object }>({
+      query: body => ({ url: '/admin/questions', method: 'POST', body }),
+    }),
+    adminDeleteQuestion: builder.mutation<void, string>({
+      query: id => ({ url: `/admin/questions/${id}`, method: 'DELETE' }),
+    }),
+    getAdminUserStats: builder.query<any, void>({
+      query: () => '/admin/users/stats',
+    }),
+    getAdminAnalytics: builder.query<any, void>({
+      query: () => '/admin/analytics',
+    }),
   }),
 });
 
@@ -146,4 +196,19 @@ export const {
   useGetDailyCurrentAffairsQuery,
   useGetMonthlyCompilationQuery,
   useGetCAQuizQuery,
+  useGetAIRecommendationsQuery,
+  useGetAIPredictionQuery,
+  useGetRevisionScheduleQuery,
+  useAddRevisionTopicMutation,
+  useUpdateRevisionReviewMutation,
+  useGetSubscriptionPlansQuery,
+  useGetSubscriptionStatusQuery,
+  useSubscribeMutation,
+  useGetOfflineQuestionsQuery,
+  useOfflineSyncMutation,
+  useGetAdminQuestionsQuery,
+  useAdminCreateQuestionMutation,
+  useAdminDeleteQuestionMutation,
+  useGetAdminUserStatsQuery,
+  useGetAdminAnalyticsQuery,
 } = upscApi;

@@ -10,6 +10,11 @@ import searchReducer from '../features/search/slice/searchSlice';
 import analyticsReducer from '../features/analytics/slice/analyticsSlice';
 import notificationsReducer from '../features/notifications/slice/notificationsSlice';
 import currentAffairsReducer from '../features/currentAffairs/slice/currentAffairsSlice';
+import aiReducer from '../features/ai/slice/aiSlice';
+import revisionReducer from '../features/revision/slice/revisionSlice';
+import subscriptionReducer from '../features/subscription/slice/subscriptionSlice';
+import offlineReducer from '../features/offline/slice/offlineSlice';
+import adminReducer from '../features/admin/slice/adminSlice';
 
 export const store = configureStore({
   reducer: {
@@ -23,6 +28,11 @@ export const store = configureStore({
     analytics: analyticsReducer,
     notifications: notificationsReducer,
     currentAffairs: currentAffairsReducer,
+    ai: aiReducer,
+    revision: revisionReducer,
+    subscription: subscriptionReducer,
+    offline: offlineReducer,
+    admin: adminReducer,
     [upscApi.reducerPath]: upscApi.reducer,
   },
   middleware: getDefault =>
