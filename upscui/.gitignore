@@ -1,0 +1,7 @@
+node_modules/
+vendor/bundle/
+ios/Pods/
+ios/build/
+android/build/
+android/.gradle/
+*.log
