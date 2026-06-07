@@ -128,3 +128,65 @@ export type AssessmentTabParamList = {
   Bookmarks: undefined;
   Notes: undefined;
 };
+
+// ── Phase 4: Gamification & Community Types ──────────────────
+
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  xp_reward: number;
+  criteria: { type: string; threshold: number };
+  earned: boolean;
+}
+
+export interface GamificationProfile {
+  total_xp: number;
+  level: number;
+  next_level_xp: number;
+  current_streak: number;
+  longest_streak: number;
+  badges: Badge[];
+  badge_count: number;
+}
+
+export interface XpEvent {
+  id: string;
+  event_type: string;
+  xp_awarded: number;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+export interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  xp_this_week: number;
+  rank: number;
+  state?: string;
+}
+
+export interface CommunityPost {
+  id: string;
+  user_id: string;
+  username: string;
+  post_type: 'achievement' | 'milestone' | 'invite' | 'general';
+  content: string;
+  metadata: Record<string, any>;
+  likes: number;
+  liked_by_me: boolean;
+  created_at: string;
+}
+
+export interface ActivityResult {
+  xp: { xp_awarded: number; total_xp: number; level: number; leveled_up: boolean };
+  streak: { current: number; longest: number; last_activity: string };
+  new_badges: Badge[];
+}
+
+export type GamificationTabParamList = {
+  Leaderboard: undefined;
+  Badges: undefined;
+  Community: undefined;
+};
