@@ -440,3 +440,283 @@ def current_affairs_quiz(month: str, current_user: str = Depends(get_current_use
         "Return JSON: {{\"id\":\"\",\"month\":\"{month}\",\"questions\":[{{Ques,Option1..5,Ans,subject}}]}}"
     )
     return ask_llm(prompt)
+
+
+# ── Phase 5: AI & Premium Features ───────────────────────────
+
+# ── AI Recommendation Module ──
+
+@app.get("/ai/recommendations")
+def ai_recommendations(current_user: str = Depends(get_current_user)):
+    history = _test_history
+    subject_acc = {}
+    for r in history:
+        for subj, d in r.get("subjectBreakdown", {}).items():
+            if subj not in subject_acc:
+                subject_acc[subj] = {"total": 0, "correct": 0}
+            subject_acc[subj]["total"] += d.get("total", 0)
+            subject_acc[subj]["correct"] += d.get("correct", 0)
+
+    weak = [s for s, d in subject_acc.items()
+            if d["total"] and (d["correct"] / d["total"]) < 0.5]
+
+    prompt = (
+        f"User is weak in: {weak or 'unknown topics'}. "
+        "Generate a personalized UPSC learning path as JSON: "
+        '{"weakTopics":[{"subject":"","topic":"","reason":""}],'
+        '"learningPath":[{"week":1,"focus":"","resources":[""],"targetAccuracy":70}]}'
+    )
+    return ask_llm(prompt)
+
+
+# ── AI Prediction Module ──
+
+@app.get("/ai/prediction")
+def ai_prediction(current_user: str = Depends(get_current_user)):
+    history = _test_history
+    if not history:
+        raise HTTPException(status_code=400, detail="No test history for prediction")
+
+    total = sum(r["totalQuestions"] for r in history)
+    correct = sum(r["correct"] for r in history)
+    avg_score = sum(r["score"] for r in history) / len(history)
+
+    prompt = (
+        f"UPSC aspirant stats: {len(history)} tests, avg score {avg_score:.1f}%, "
+        f"overall accuracy {round(correct/total*100,1) if total else 0}%. "
+        "Predict UPSC success as JSON: "
+        '{"successProbability":75.5,"rankPrediction":4500,"confidenceScore":82.0,'
+        '"insights":["",""],"improvementAreas":["",""]}'
+    )
+    return ask_llm(prompt)
+
+
+# ── Smart Revision Planner ──
+
+_revision_store: dict = {}   # user -> list[dict]
+
+
+class RevisionTopicRequest(BaseModel):
+    topic: str
+    subject: str
+    quality: int  # 0-5 SM-2 quality rating
+
+
+@app.get("/revision/schedule")
+def get_revision_schedule(current_user: str = Depends(get_current_user)):
+    from datetime import date
+    today = str(date.today())
+    schedule = _revision_store.get(current_user, [])
+    due = [t for t in schedule if t["nextReview"] <= today]
+    upcoming = [t for t in schedule if t["nextReview"] > today]
+    return {"due": due, "upcoming": upcoming}
+
+
+@app.post("/revision/add")
+def add_revision_topic(body: RevisionTopicRequest, current_user: str = Depends(get_current_user)):
+    from datetime import date, timedelta
+    if current_user not in _revision_store:
+        _revision_store[current_user] = []
+    record = {
+        "id": str(uuid.uuid4()),
+        "topic": body.topic,
+        "subject": body.subject,
+        "interval": 1,
+        "easeFactor": 2.5,
+        "repetitions": 0,
+        "nextReview": str(date.today() + timedelta(days=1)),
+    }
+    _revision_store[current_user].append(record)
+    return record
+
+
+@app.put("/revision/{topic_id}/review")
+def update_revision_review(topic_id: str, body: RevisionTopicRequest, current_user: str = Depends(get_current_user)):
+    """SM-2 spaced repetition algorithm."""
+    from datetime import date, timedelta
+    for t in _revision_store.get(current_user, []):
+        if t["id"] == topic_id:
+            q = max(0, min(5, body.quality))
+            ef = t["easeFactor"] + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+            ef = max(1.3, ef)
+            if q < 3:
+                interval, reps = 1, 0
+            else:
+                reps = t["repetitions"] + 1
+                if reps == 1:
+                    interval = 1
+                elif reps == 2:
+                    interval = 6
+                else:
+                    interval = round(t["interval"] * ef)
+            t.update({"easeFactor": round(ef, 2), "interval": interval,
+                       "repetitions": reps,
+                       "nextReview": str(date.today() + timedelta(days=interval))})
+            return t
+    raise HTTPException(status_code=404, detail="Topic not found")
+
+
+# ── Subscription Module ──
+
+PLANS = [
+    {"id": "plan_free",    "name": "Free",    "price": 0,   "duration": 36500,
+     "features": ["10 questions/day", "Basic analytics"]},
+    {"id": "plan_pro",     "name": "Pro",     "price": 199, "duration": 30,
+     "features": ["Unlimited questions", "AI recommendations", "Offline mode"]},
+    {"id": "plan_premium", "name": "Premium", "price": 499, "duration": 90,
+     "features": ["Everything in Pro", "Rank prediction", "Priority support"]},
+]
+
+_user_subscriptions: dict = {}  # user -> subscription record
+
+
+class SubscribeRequest(BaseModel):
+    planId: str
+    razorpayOrderId: Optional[str] = None
+    razorpayPaymentId: Optional[str] = None
+
+
+@app.get("/subscription/plans")
+def get_plans():
+    return PLANS
+
+
+@app.get("/subscription/status")
+def subscription_status(current_user: str = Depends(get_current_user)):
+    sub = _user_subscriptions.get(current_user)
+    if not sub:
+        return {"status": "free", "plan": "Free"}
+    from datetime import datetime
+    expired = datetime.fromisoformat(sub["expiresAt"]) < datetime.utcnow()
+    return {**sub, "status": "expired" if expired else "active"}
+
+
+@app.post("/subscription/subscribe")
+def subscribe(body: SubscribeRequest, current_user: str = Depends(get_current_user)):
+    plan = next((p for p in PLANS if p["id"] == body.planId), None)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    record = {
+        "id": str(uuid.uuid4()),
+        "planId": plan["id"],
+        "planName": plan["name"],
+        "razorpayOrderId": body.razorpayOrderId,
+        "razorpayPaymentId": body.razorpayPaymentId,
+        "status": "active",
+        "startsAt": now.isoformat(),
+        "expiresAt": (now + timedelta(days=plan["duration"])).isoformat(),
+    }
+    _user_subscriptions[current_user] = record
+    return record
+
+
+# ── Offline Module ──
+
+class OfflineSyncRequest(BaseModel):
+    entity: str   # 'notes' | 'bookmarks'
+    payload: list
+
+
+_offline_questions: dict = {}   # user -> list of questions
+_offline_sync_log: list = []
+
+
+@app.get("/offline/questions")
+def offline_question_bank(count: int = 50, current_user: str = Depends(get_current_user)):
+    prompt = (
+        f"Generate {count} UPSC Science MCQ questions for offline use. "
+        "Return JSON array [{Ques,Option1..5,Ans,subject,difficulty,topic}]"
+    )
+    questions = ask_llm(prompt)
+    _offline_questions[current_user] = questions
+    return {"questions": questions, "count": count, "syncedAt": datetime.utcnow().isoformat()}
+
+
+@app.post("/offline/sync")
+def offline_sync(body: OfflineSyncRequest, current_user: str = Depends(get_current_user)):
+    record = {
+        "id": str(uuid.uuid4()),
+        "userId": current_user,
+        "entity": body.entity,
+        "count": len(body.payload),
+        "syncedAt": datetime.utcnow().isoformat(),
+    }
+    _offline_sync_log.append(record)
+    # Merge into appropriate store
+    if body.entity == "notes" and current_user in _notes:
+        existing_ids = {n["id"] for n in _notes[current_user]}
+        for item in body.payload:
+            if item["id"] not in existing_ids:
+                _notes[current_user].append(item)
+    elif body.entity == "bookmarks" and current_user in _bookmarks:
+        existing_ids = {b["id"] for b in _bookmarks[current_user]}
+        for item in body.payload:
+            if item["id"] not in existing_ids:
+                _bookmarks[current_user].append(item)
+    return record
+
+
+# ── Admin Module ──
+
+_managed_questions: list = []
+_admin_tokens: set = {os.getenv("ADMIN_TOKEN", "admin-secret")}
+
+
+def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials.credentials not in _admin_tokens:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return credentials.credentials
+
+
+class ManagedQuestionRequest(BaseModel):
+    subject: str
+    topic: Optional[str] = None
+    difficulty: str = "medium"
+    payload: dict  # {Ques, Option1..5, Ans}
+
+
+@app.get("/admin/questions")
+def admin_list_questions(subject: Optional[str] = None, _: str = Depends(get_admin_user)):
+    qs = _managed_questions
+    if subject:
+        qs = [q for q in qs if q["subject"] == subject]
+    return qs
+
+
+@app.post("/admin/questions")
+def admin_create_question(body: ManagedQuestionRequest, _: str = Depends(get_admin_user)):
+    record = {"id": str(uuid.uuid4()), **body.model_dump(),
+              "isActive": True, "createdAt": datetime.utcnow().isoformat()}
+    _managed_questions.append(record)
+    return record
+
+
+@app.delete("/admin/questions/{question_id}")
+def admin_delete_question(question_id: str, _: str = Depends(get_admin_user)):
+    global _managed_questions
+    _managed_questions = [q for q in _managed_questions if q["id"] != question_id]
+    return {"success": True}
+
+
+@app.get("/admin/users/stats")
+def admin_user_stats(_: str = Depends(get_admin_user)):
+    return {
+        "totalTests": len(_test_history),
+        "totalBookmarks": sum(len(v) for v in _bookmarks.values()),
+        "totalNotes": sum(len(v) for v in _notes.values()),
+        "activeSubscriptions": sum(1 for s in _user_subscriptions.values() if s["status"] == "active"),
+    }
+
+
+@app.get("/admin/analytics")
+def admin_analytics(_: str = Depends(get_admin_user)):
+    if not _test_history:
+        return {"avgScore": 0, "totalTests": 0, "subjectDistribution": {}}
+    avg = round(sum(r["score"] for r in _test_history) / len(_test_history), 1)
+    subj_dist: dict = defaultdict(int)
+    for r in _test_history:
+        for s in r.get("subjectBreakdown", {}):
+            subj_dist[s] += 1
+    return {"avgScore": avg, "totalTests": len(_test_history), "subjectDistribution": dict(subj_dist)}
