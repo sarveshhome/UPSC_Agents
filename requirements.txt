@@ -2,3 +2,4 @@ fastapi
 uvicorn[standard]
 cohere
 python-dotenv
+python-dateutil

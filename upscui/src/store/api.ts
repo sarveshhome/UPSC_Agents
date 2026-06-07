@@ -1,5 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { Question, AnswerResult, Note, Bookmark, TestResult, SearchFilters } from '../types';
+import type {
+  Question, AnswerResult, Note, Bookmark, TestResult, SearchFilters,
+  AnalyticsSummary, WeeklyReport, MonthlyReport, CurrentAffairsArticle, CurrentAffairsQuiz, NotificationPrefs,
+} from '../types';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -84,6 +87,33 @@ export const upscApi = createApi({
       query: id => ({ url: `/notes/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Note'],
     }),
+    // ── Phase 3: Analytics ────────────────────────────────
+    getAnalyticsSummary: builder.query<AnalyticsSummary, void>({
+      query: () => '/analytics/summary',
+    }),
+    getWeeklyReport: builder.query<WeeklyReport, string>({
+      query: week => `/analytics/weekly?week=${week}`,
+    }),
+    getMonthlyReport: builder.query<MonthlyReport, string>({
+      query: month => `/analytics/monthly?month=${month}`,
+    }),
+    // ── Phase 3: Notifications ────────────────────────────
+    getNotificationPrefs: builder.query<NotificationPrefs, void>({
+      query: () => '/notifications/prefs',
+    }),
+    updateNotificationPrefs: builder.mutation<NotificationPrefs, Partial<NotificationPrefs>>({
+      query: body => ({ url: '/notifications/prefs', method: 'PUT', body }),
+    }),
+    // ── Phase 3: Current Affairs ──────────────────────────
+    getDailyCurrentAffairs: builder.query<CurrentAffairsArticle[], void>({
+      query: () => '/current-affairs/daily',
+    }),
+    getMonthlyCompilation: builder.query<{ month: string; articleCount: number }[], void>({
+      query: () => '/current-affairs/monthly',
+    }),
+    getCAQuiz: builder.query<CurrentAffairsQuiz, string>({
+      query: month => `/current-affairs/quiz?month=${month}`,
+    }),
   }),
 });
 
@@ -108,4 +138,12 @@ export const {
   useCreateNoteMutation,
   useUpdateNoteMutation,
   useDeleteNoteMutation,
+  useGetAnalyticsSummaryQuery,
+  useGetWeeklyReportQuery,
+  useGetMonthlyReportQuery,
+  useGetNotificationPrefsQuery,
+  useUpdateNotificationPrefsMutation,
+  useGetDailyCurrentAffairsQuery,
+  useGetMonthlyCompilationQuery,
+  useGetCAQuizQuery,
 } = upscApi;

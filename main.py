@@ -242,3 +242,201 @@ def delete_note(note_id: str, current_user: str = Depends(get_current_user)):
     if current_user in _notes:
         _notes[current_user] = [n for n in _notes[current_user] if n["id"] != note_id]
     return {"success": True}
+
+
+# ── Phase 3: Analytics ────────────────────────────────────────
+
+from collections import defaultdict
+import re
+
+def _build_subject_stats(history: list) -> list:
+    agg: dict = defaultdict(lambda: {"total": 0, "correct": 0})
+    for r in history:
+        for subj, data in r.get("subjectBreakdown", {}).items():
+            agg[subj]["total"] += data.get("total", 0)
+            agg[subj]["correct"] += data.get("correct", 0)
+    stats = []
+    for subj, d in agg.items():
+        acc = round(d["correct"] / d["total"] * 100, 1) if d["total"] else 0
+        stats.append({"subject": subj, "total": d["total"], "correct": d["correct"], "accuracy": acc})
+    return stats
+
+
+def _iso_week(dt_str: str) -> str:
+    dt = datetime.fromisoformat(dt_str)
+    return f"{dt.isocalendar()[0]}-W{dt.isocalendar()[1]:02d}"
+
+
+def _month_str(dt_str: str) -> str:
+    return dt_str[:7]
+
+
+@app.get("/analytics/summary")
+def analytics_summary(current_user: str = Depends(get_current_user)):
+    history = _test_history
+    total = sum(r["totalQuestions"] for r in history)
+    correct = sum(r["correct"] for r in history)
+    accuracy = round(correct / total * 100, 1) if total else 0
+
+    # streak: consecutive days with at least one submission
+    dates = sorted({r["submittedAt"][:10] for r in history}, reverse=True)
+    streak = 0
+    from datetime import date, timedelta
+    today = date.today()
+    for i, d in enumerate(dates):
+        if date.fromisoformat(d) == today - timedelta(days=i):
+            streak += 1
+        else:
+            break
+
+    # weekly / monthly rollups
+    weekly: dict = defaultdict(lambda: {"totalAttempted": 0, "correct": 0, "scores": [], "subj": defaultdict(lambda: {"total": 0, "correct": 0})})
+    monthly: dict = defaultdict(lambda: {"totalAttempted": 0, "correct": 0, "scores": [], "subj": defaultdict(lambda: {"total": 0, "correct": 0}), "weeks": set()})
+
+    for r in history:
+        w = _iso_week(r["submittedAt"])
+        m = _month_str(r["submittedAt"])
+        weekly[w]["totalAttempted"] += r["totalQuestions"]
+        weekly[w]["correct"] += r["correct"]
+        weekly[w]["scores"].append(r["score"])
+        monthly[m]["totalAttempted"] += r["totalQuestions"]
+        monthly[m]["correct"] += r["correct"]
+        monthly[m]["scores"].append(r["score"])
+        monthly[m]["weeks"].add(w)
+        for subj, d in r.get("subjectBreakdown", {}).items():
+            weekly[w]["subj"][subj]["total"] += d.get("total", 0)
+            weekly[w]["subj"][subj]["correct"] += d.get("correct", 0)
+            monthly[m]["subj"][subj]["total"] += d.get("total", 0)
+            monthly[m]["subj"][subj]["correct"] += d.get("correct", 0)
+
+    def _subj_stats(subj_dict):
+        return [{"subject": s, "total": v["total"], "correct": v["correct"],
+                 "accuracy": round(v["correct"] / v["total"] * 100, 1) if v["total"] else 0}
+                for s, v in subj_dict.items()]
+
+    weekly_reports = [{"week": w, "totalAttempted": v["totalAttempted"],
+                        "accuracy": round(v["correct"] / v["totalAttempted"] * 100, 1) if v["totalAttempted"] else 0,
+                        "avgScore": round(sum(v["scores"]) / len(v["scores"]), 1) if v["scores"] else 0,
+                        "subjectStats": _subj_stats(v["subj"])} for w, v in sorted(weekly.items())]
+
+    monthly_reports = [{"month": m, "totalAttempted": v["totalAttempted"],
+                         "accuracy": round(v["correct"] / v["totalAttempted"] * 100, 1) if v["totalAttempted"] else 0,
+                         "avgScore": round(sum(v["scores"]) / len(v["scores"]), 1) if v["scores"] else 0,
+                         "subjectStats": _subj_stats(v["subj"]),
+                         "weeklyBreakdown": [wr for wr in weekly_reports if wr["week"] in v["weeks"]]}
+                        for m, v in sorted(monthly.items())]
+
+    return {"overallAccuracy": accuracy, "totalAttempted": total, "streak": streak,
+            "subjectStats": _build_subject_stats(history),
+            "weeklyReports": weekly_reports, "monthlyReports": monthly_reports}
+
+
+@app.get("/analytics/weekly")
+def analytics_weekly(week: str, current_user: str = Depends(get_current_user)):
+    records = [r for r in _test_history if _iso_week(r["submittedAt"]) == week]
+    if not records:
+        raise HTTPException(status_code=404, detail="No data for this week")
+    total = sum(r["totalQuestions"] for r in records)
+    correct = sum(r["correct"] for r in records)
+    scores = [r["score"] for r in records]
+    return {"week": week, "totalAttempted": total,
+            "accuracy": round(correct / total * 100, 1) if total else 0,
+            "avgScore": round(sum(scores) / len(scores), 1),
+            "subjectStats": _build_subject_stats(records)}
+
+
+@app.get("/analytics/monthly")
+def analytics_monthly(month: str, current_user: str = Depends(get_current_user)):
+    records = [r for r in _test_history if _month_str(r["submittedAt"]) == month]
+    if not records:
+        raise HTTPException(status_code=404, detail="No data for this month")
+    total = sum(r["totalQuestions"] for r in records)
+    correct = sum(r["correct"] for r in records)
+    scores = [r["score"] for r in records]
+    weeks = sorted({_iso_week(r["submittedAt"]) for r in records})
+
+    def _weekly_breakdown(w):
+        recs = [r for r in records if _iso_week(r["submittedAt"]) == w]
+        t = sum(r["totalQuestions"] for r in recs)
+        c = sum(r["correct"] for r in recs)
+        sc = [r["score"] for r in recs]
+        return {"week": w, "totalAttempted": t,
+                "accuracy": round(c / t * 100, 1) if t else 0,
+                "avgScore": round(sum(sc) / len(sc), 1) if sc else 0,
+                "subjectStats": _build_subject_stats(recs)}
+
+    return {"month": month, "totalAttempted": total,
+            "accuracy": round(correct / total * 100, 1) if total else 0,
+            "avgScore": round(sum(scores) / len(scores), 1),
+            "subjectStats": _build_subject_stats(records),
+            "weeklyBreakdown": [_weekly_breakdown(w) for w in weeks]}
+
+
+# ── Phase 3: Notifications ────────────────────────────────────
+
+_notification_prefs: dict = {}  # token -> prefs
+
+_default_prefs = {
+    "studyReminder": True,
+    "studyReminderTime": "08:00",
+    "testReminder": True,
+    "testReminderTime": "18:00",
+    "currentAffairs": True,
+}
+
+
+class NotificationPrefsRequest(BaseModel):
+    studyReminder: Optional[bool] = None
+    studyReminderTime: Optional[str] = None
+    testReminder: Optional[bool] = None
+    testReminderTime: Optional[str] = None
+    currentAffairs: Optional[bool] = None
+
+
+@app.get("/notifications/prefs")
+def get_notification_prefs(current_user: str = Depends(get_current_user)):
+    return _notification_prefs.get(current_user, _default_prefs)
+
+
+@app.put("/notifications/prefs")
+def update_notification_prefs(body: NotificationPrefsRequest, current_user: str = Depends(get_current_user)):
+    prefs = dict(_notification_prefs.get(current_user, _default_prefs))
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    prefs.update(updates)
+    _notification_prefs[current_user] = prefs
+    return prefs
+
+
+# ── Phase 3: Current Affairs ──────────────────────────────────
+
+@app.get("/current-affairs/daily")
+def daily_current_affairs(current_user: str = Depends(get_current_user)):
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    prompt = (
+        f"Generate 5 current affairs articles relevant to UPSC exam for {today}. "
+        "Return a JSON array with schema: "
+        '[{{"id":"uuid","title":"","summary":"2-3 sentences","source":"","subject":"","date":""}}]'
+    )
+    return ask_llm(prompt)
+
+
+@app.get("/current-affairs/monthly")
+def monthly_compilation_index(current_user: str = Depends(get_current_user)):
+    from datetime import date
+    today = date.today()
+    months = []
+    for i in range(3):
+        m = today.replace(day=1)
+        from dateutil.relativedelta import relativedelta
+        m = m - relativedelta(months=i)
+        months.append({"month": m.strftime("%Y-%m"), "articleCount": 30})
+    return months
+
+
+@app.get("/current-affairs/quiz")
+def current_affairs_quiz(month: str, current_user: str = Depends(get_current_user)):
+    prompt = (
+        f"Generate 5 UPSC current affairs MCQ questions for {month}. "
+        "Return JSON: {{\"id\":\"\",\"month\":\"{month}\",\"questions\":[{{Ques,Option1..5,Ans,subject}}]}}"
+    )
+    return ask_llm(prompt)

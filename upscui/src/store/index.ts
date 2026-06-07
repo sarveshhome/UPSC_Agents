@@ -7,6 +7,9 @@ import testReducer from '../features/test/slice/testSlice';
 import bookmarkReducer from '../features/bookmark/slice/bookmarkSlice';
 import notesReducer from '../features/notes/slice/notesSlice';
 import searchReducer from '../features/search/slice/searchSlice';
+import analyticsReducer from '../features/analytics/slice/analyticsSlice';
+import notificationsReducer from '../features/notifications/slice/notificationsSlice';
+import currentAffairsReducer from '../features/currentAffairs/slice/currentAffairsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +20,9 @@ export const store = configureStore({
     bookmark: bookmarkReducer,
     notes: notesReducer,
     search: searchReducer,
+    analytics: analyticsReducer,
+    notifications: notificationsReducer,
+    currentAffairs: currentAffairsReducer,
     [upscApi.reducerPath]: upscApi.reducer,
   },
   middleware: getDefault =>
