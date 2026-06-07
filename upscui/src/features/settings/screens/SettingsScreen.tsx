@@ -18,7 +18,9 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.label}>Dark Mode</Text>
           <Text style={styles.sub}>Switch to dark theme</Text>
         </View>
-        <Switch value={theme === 'dark'} onValueChange={() => dispatch(toggleTheme())}
+        <Switch
+          value={theme === 'dark'}
+          onValueChange={(_val: boolean) => { dispatch(toggleTheme()); }}
           trackColor={{ true: colors.primary }} />
       </View>
 
@@ -29,7 +31,9 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.label}>Notifications</Text>
           <Text style={styles.sub}>Daily question reminders</Text>
         </View>
-        <Switch value={notifications} onValueChange={() => dispatch(toggleNotifications())}
+        <Switch
+          value={notifications}
+          onValueChange={(_val: boolean) => { dispatch(toggleNotifications()); }}
           trackColor={{ true: colors.primary }} />
       </View>
     </View>

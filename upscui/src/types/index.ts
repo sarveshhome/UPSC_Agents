@@ -47,6 +47,7 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   QuestionBank: undefined;
+  Assessment: undefined;
   Profile: undefined;
   Settings: undefined;
 };
@@ -56,4 +57,74 @@ export type HomeStackParamList = {
   QuestionDetail: { question: Question };
   AnswerResult: { result: AnswerResult; question: Question };
   Explanation: { question: Question; result: AnswerResult };
+};
+
+// ── Phase 2: Assessment System Types ─────────────────────────
+export type TestType = 'mock' | 'sectional' | 'daily';
+
+export interface TestQuestion extends Question {
+  userAnswer?: string;
+  timeTaken?: number;
+}
+
+export interface TestSession {
+  id: string;
+  type: TestType;
+  subject?: string;
+  questions: TestQuestion[];
+  currentIndex: number;
+  timeLimit: number;
+  timeLeft: number;
+  started: boolean;
+  submitted: boolean;
+  startedAt?: string;
+}
+
+export interface TestResult {
+  sessionId: string;
+  totalQuestions: number;
+  correct: number;
+  incorrect: number;
+  unattempted: number;
+  score: number;
+  timeTaken: number;
+  subjectBreakdown: Record<string, { correct: number; total: number }>;
+}
+
+export interface Bookmark {
+  id: string;
+  questionId: string;
+  question: Question;
+  note?: string;
+  createdAt: string;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  subject?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SearchFilters {
+  query: string;
+  subject?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  type?: 'question' | 'topic' | 'pyq';
+}
+
+export type TestStackParamList = {
+  TestHome: undefined;
+  MockTest: { type: TestType; subject?: string; questionCount: number; timeLimit: number };
+  TestEngine: undefined;
+  TestResult: { result: TestResult };
+};
+
+export type AssessmentTabParamList = {
+  Tests: undefined;
+  Search: undefined;
+  Bookmarks: undefined;
+  Notes: undefined;
 };

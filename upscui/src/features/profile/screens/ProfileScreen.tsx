@@ -11,7 +11,7 @@ import type { RootState } from '../../../store';
 
 export const ProfileScreen: React.FC = () => {
   const dispatch = useDispatch();
-  const user = useSelector((s: RootState) => s.auth.user);
+  const { user, token } = useSelector((s: RootState) => s.auth);
   const [editing, setEditing] = useState(false);
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
@@ -22,7 +22,7 @@ export const ProfileScreen: React.FC = () => {
   const onSave = async (data: any) => {
     try {
       const updated = await updateProfile({ name: data.name, targetYear: Number(data.targetYear) }).unwrap();
-      dispatch(setCredentials({ token: '', user: updated }));
+      dispatch(setCredentials({ token: token ?? '', username: updated?.name ?? '' }));
       setEditing(false);
       Alert.alert('Profile Updated');
     } catch {

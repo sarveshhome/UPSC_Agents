@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 import { HomeNavigator } from './HomeNavigator';
+import { AssessmentNavigator } from './AssessmentNavigator';
 import { QuestionBankScreen } from '../features/questionBank/screens/QuestionBankScreen';
 import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
 import { SettingsScreen } from '../features/settings/screens/SettingsScreen';
@@ -9,7 +10,6 @@ import { colors } from '../shared/theme';
 import type { MainTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-
 const icon = (emoji: string) => () => <Text style={{ fontSize: 20 }}>{emoji}</Text>;
 
 export const MainNavigator: React.FC = () => (
@@ -27,6 +27,8 @@ export const MainNavigator: React.FC = () => (
         headerShown: true, headerTitle: 'Question Bank',
         headerStyle: { backgroundColor: colors.primary },
         headerTintColor: '#fff' }} />
+    <Tab.Screen name="Assessment" component={AssessmentNavigator}
+      options={{ tabBarIcon: icon('🎯'), tabBarLabel: 'Assessment' }} />
     <Tab.Screen name="Profile" component={ProfileScreen}
       options={{ tabBarIcon: icon('👤'), tabBarLabel: 'Profile',
         headerShown: true, headerTitle: 'My Profile',
