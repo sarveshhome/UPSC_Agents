@@ -1,0 +1,2 @@
+/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt
+/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt

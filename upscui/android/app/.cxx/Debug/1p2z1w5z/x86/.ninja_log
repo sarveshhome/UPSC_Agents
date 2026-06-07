@@ -1,0 +1,17 @@
+# ninja log v5
+0	2753	1780747810836156330	CMakeFiles/appmodules.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	c42b202062d113b2
+0	2649	1780747810738947050	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp.o	53b43235ac771cd7
+0	2407	1780747810495449703	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni/react/renderer/components/safeareacontext/ComponentDescriptors.cpp.o	1cadfbb8f5c2f2ef
+0	2186	1780747810275852788	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni/react/renderer/components/safeareacontext/Props.cpp.o	80e16dc7ae9380df
+1	2058	1780747810153902697	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni/react/renderer/components/safeareacontext/ShadowNodes.cpp.o	2f21c8d4709dd7ad
+0	2008	1780747810102080059	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.cpp.o	e1ad7891f4072739
+0	1845	1780747809937549009	CMakeFiles/appmodules.dir/OnLoad.cpp.o	62d57185c7a18568
+1	1564	1780747809653907177	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni/safeareacontext-generated.cpp.o	51e9b1e6e5ca4b9f
+1	1167	1780747809263836927	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni/react/renderer/components/safeareacontext/States.cpp.o	ddfe1d1b615f7eef
+2649	2789	1780747810885414369	/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/android/app/build/intermediates/cxx/Debug/1p2z1w5z/obj/x86/libreact_codegen_safeareacontext.so	3ff5270c87ec4b0
+0	1372	1780747809464498189	safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/node_modules/react-native-safe-area-context/android/build/generated/source/codegen/jni/react/renderer/components/safeareacontext/EventEmitters.cpp.o	a6c337f4e14bb693
+2789	2843	1780747810941329114	/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/android/app/build/intermediates/cxx/Debug/1p2z1w5z/obj/x86/libappmodules.so	94bd25232c7c4db1
+1	14	0	/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/android/app/.cxx/Debug/1p2z1w5z/x86/CMakeFiles/cmake.verify_globs	495da16842711d96
+14	191	1780768203749382715	build.ninja	d6f772f3640e71a1
+0	10	0	/Users/sarveshkumar/Practice/Python/UPSC_Agents/upscui/android/app/.cxx/Debug/1p2z1w5z/x86/CMakeFiles/cmake.verify_globs	495da16842711d96
+0	15	0	clean	4c781e09b7c9a8e5
