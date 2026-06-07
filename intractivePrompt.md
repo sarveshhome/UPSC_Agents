@@ -9,7 +9,7 @@ Build Phase 1 of UPSC Master using Feature-Based Clean Architecture.
 Frontend:
 
 * React Native
-* TypeScript
+* JSX
 * Redux Toolkit
 * RTK Query
 * React Navigation
