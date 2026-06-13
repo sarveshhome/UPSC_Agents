@@ -23,7 +23,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from llm import ask_llm
 from interface_adapters.gateways.database_gateway import SQLiteUserRepository, SQLiteSessionRepository
+from interface_adapters.gateways.question_gateway import SQLiteQuestionRepository, SQLiteUserHistoryRepository
 from use_cases.auth import RegisterUser, AuthenticateUser
+from use_cases.question_service import QuestionService
+from entities.question import UserQuestionHistory
 from interface_adapters.controllers.auth_controller import AuthController, LoginRequest, LoginResponse, RegisterRequest
 
 app = FastAPI()
@@ -35,8 +38,13 @@ register_user = RegisterUser(user_repo)
 authenticate_user = AuthenticateUser(user_repo, session_repo)
 auth_controller = AuthController(register_user, authenticate_user)
 
+question_repo = SQLiteQuestionRepository()
+history_repo = SQLiteUserHistoryRepository()
+question_service = QuestionService(question_repo, history_repo)
+
 security = HTTPBearer()
-current_question: dict = {}
+current_question: dict = {}   # legacy single-question store
+_current_question_obj = None  # typed Question object
 
 
 @app.post("/register")
@@ -58,25 +66,40 @@ def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     logger.debug(f"Auth attempt - Token prefix: {token[:10] if token else 'None'}")
-    
+
     if not session_repo.validate(token):
         logger.warning(f"Auth failed - Invalid token prefix: {token[:10] if token else 'None'}")
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-    
+
     logger.info("Auth successful")
     return token
 
 
+def _resolve_user_id(token: str) -> int:
+    """Resolve integer user_id from session token."""
+    import sqlite3
+    conn = sqlite3.connect("users.db")
+    row = conn.execute("SELECT username FROM sessions WHERE token = ?", (token,)).fetchone()
+    conn.close()
+    if not row:
+        return 0
+    user = user_repo.find_by_username(row[0])
+    return user.id if user and user.id else 0
+
+
 @app.get("/next")
 def next_question(current_user: str = Depends(get_current_user)):
-    global current_question
+    global current_question, _current_question_obj
     logger.info("Fetching next question for user")
+    user_id = _resolve_user_id(current_user)
     try:
-        current_question = ask_llm("next")
+        q = question_service.get_single_question(user_id)
+        _current_question_obj = q
+        current_question = question_service.question_to_api_dict(q)
         logger.debug("Question fetched successfully")
         return current_question
-    except Exception as e:
-        logger.error("LLM request failed", exc_info=True)
+    except Exception:
+        logger.error("Question fetch failed", exc_info=True)
         raise
 
 
@@ -91,9 +114,20 @@ def check_answer(body: AnswerRequest, current_user: str = Depends(get_current_us
 
     correct = set(current_question["Ans"].split(","))
     given = set(a.strip() for a in body.answer.split(","))
+    is_correct = correct == given
+
+    # Persist attempt history
+    if _current_question_obj:
+        user_id = _resolve_user_id(current_user)
+        history_repo.save_attempt(UserQuestionHistory(
+            user_id=user_id,
+            question_id=_current_question_obj.id,
+            selected_option=body.answer,
+            is_correct=is_correct,
+        ))
 
     return {
-        "correct": correct == given,
+        "correct": is_correct,
         "your_answer": body.answer,
         "correct_answer": current_question["Ans"],
         "question": current_question["Ques"],
@@ -720,3 +754,70 @@ def admin_analytics(_: str = Depends(get_admin_user)):
         for s in r.get("subjectBreakdown", {}):
             subj_dist[s] += 1
     return {"avgScore": avg, "totalTests": len(_test_history), "subjectDistribution": dict(subj_dist)}
+
+
+# ── /api/v1 Clean Question APIs ───────────────────────────────
+
+class V1QuestionRequest(BaseModel):
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+    difficulty: Optional[str] = "medium"
+    count: int = 10
+
+
+class V1SubmitRequest(BaseModel):
+    questionId: str
+    selectedOption: str
+    timeTaken: int = 0
+
+
+@app.get("/api/v1/questions")
+def v1_get_questions(
+    subject: Optional[str] = None,
+    topic: Optional[str] = None,
+    difficulty: Optional[str] = "medium",
+    count: int = 10,
+    current_user: str = Depends(get_current_user),
+):
+    user_id = _resolve_user_id(current_user)
+    questions = question_service.get_questions(
+        user_id=user_id,
+        subject=subject or "",
+        topic=topic or "",
+        difficulty=difficulty or "medium",
+        count=count,
+    )
+    return [question_service.question_to_api_dict(q) for q in questions]
+
+
+@app.post("/api/v1/questions/submit")
+def v1_submit_answer(body: V1SubmitRequest, current_user: str = Depends(get_current_user)):
+    user_id = _resolve_user_id(current_user)
+    q = question_repo.get_by_id(body.questionId)
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    correct_set = set(q.correct_answer.split(","))
+    given_set = set(a.strip() for a in body.selectedOption.split(","))
+    is_correct = correct_set == given_set
+
+    history_repo.save_attempt(UserQuestionHistory(
+        user_id=user_id,
+        question_id=body.questionId,
+        selected_option=body.selectedOption,
+        is_correct=is_correct,
+        time_taken=body.timeTaken,
+    ))
+
+    return {
+        "correct": is_correct,
+        "selectedOption": body.selectedOption,
+        "correctAnswer": q.correct_answer,
+        "explanation": q.explanation,
+    }
+
+
+@app.get("/api/v1/users/me/history")
+def v1_user_history(current_user: str = Depends(get_current_user)):
+    user_id = _resolve_user_id(current_user)
+    return history_repo.get_summary(user_id)

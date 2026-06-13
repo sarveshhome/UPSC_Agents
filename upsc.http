@@ -13,7 +13,6 @@ POST http://127.0.0.1:8000/login
 Content-Type: application/json
 
 {
-    "name": "John Doe",
     "username": "johndoe",
     "password": "password123"
 }
@@ -30,3 +29,252 @@ Content-Type: application/json
 {
     "answer": "Option1"
 }
+
+### Logout (Authenticated)
+POST http://127.0.0.1:8000/logout
+Authorization: Bearer {{token}}
+
+### Get Subjects (Authenticated)
+GET http://127.0.0.1:8000/subjects
+Authorization: Bearer {{token}}
+
+### Get Topics (Authenticated)
+GET http://127.0.0.1:8000/topics?subject=Indian Polity
+Authorization: Bearer {{token}}
+
+### Get Filtered Questions (Authenticated)
+GET http://127.0.0.1:8000/questions?subject=Indian Polity&topic=Fundamental Rights&difficulty=medium
+Authorization: Bearer {{token}}
+
+### v1: Get Questions (Authenticated)
+GET http://127.0.0.1:8000/api/v1/questions?subject=Indian Polity&topic=Fundamental Rights&difficulty=medium&count=10
+Authorization: Bearer {{token}}
+
+### v1: Submit Answer (Authenticated)
+POST http://127.0.0.1:8000/api/v1/questions/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "questionId": "test-question-id",
+    "selectedOption": "Option2",
+    "timeTaken": 25
+}
+
+### v1: User History (Authenticated)
+GET http://127.0.0.1:8000/api/v1/users/me/history
+Authorization: Bearer {{token}}
+
+### Analytics Summary (Authenticated)
+GET http://127.0.0.1:8000/analytics/summary
+Authorization: Bearer {{token}}
+
+### AI Recommendations (Authenticated)
+GET http://127.0.0.1:8000/ai/recommendations
+Authorization: Bearer {{token}}
+
+### Revision Schedule (Authenticated)
+GET http://127.0.0.1:8000/revision/schedule
+Authorization: Bearer {{token}}
+
+### Submit Test (Authenticated)
+POST http://127.0.0.1:8000/test/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "totalQuestions": 100,
+    "correct": 85,
+    "incorrect": 10,
+    "unattempted": 5,
+    "score": 85.0,
+    "timeTaken": 3600,
+    "subjectBreakdown": {
+        "Indian Polity": {"total": 50, "correct": 45},
+        "Geography": {"total": 50, "correct": 40}
+    }
+}
+
+### Get Test History (Authenticated)
+GET http://127.0.0.1:8000/test/history
+Authorization: Bearer {{token}}
+
+### Get Test Questions (Authenticated)
+GET http://127.0.0.1:8000/test/questions?type=prelims&count=10
+Authorization: Bearer {{token}}
+
+### Search Questions (Authenticated)
+GET http://127.0.0.1:8000/search?query=climate change
+Authorization: Bearer {{token}}
+
+### Get Bookmarks (Authenticated)
+GET http://127.0.0.1:8000/bookmarks
+Authorization: Bearer {{token}}
+
+### Add Bookmark (Authenticated)
+POST http://127.0.0.1:8000/bookmarks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "questionId": "test-question-id",
+    "note": "Important for revision"
+}
+
+### Delete Bookmark (Authenticated)
+DELETE http://127.0.0.1:8000/bookmarks/test-bookmark-id
+Authorization: Bearer {{token}}
+
+### Get Notes (Authenticated)
+GET http://127.0.0.1:8000/notes
+Authorization: Bearer {{token}}
+
+### Create Note (Authenticated)
+POST http://127.0.0.1:8000/notes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "title": "UPSC Revision Notes",
+    "content": "Key points on fundamental rights...",
+    "subject": "Indian Polity"
+}
+
+### Update Note (Authenticated)
+PUT http://127.0.0.1:8000/notes/test-note-id
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "title": "Updated Title",
+    "content": "Updated content..."
+}
+
+### Delete Note (Authenticated)
+DELETE http://127.0.0.1:8000/notes/test-note-id
+Authorization: Bearer {{token}}
+
+### Analytics Weekly (Authenticated)
+GET http://127.0.0.1:8000/analytics/weekly?week=2024-W24
+Authorization: Bearer {{token}}
+
+### Analytics Monthly (Authenticated)
+GET http://127.0.0.1:8000/analytics/monthly?month=2024-06
+Authorization: Bearer {{token}}
+
+### AI Prediction (Authenticated)
+GET http://127.0.0.1:8000/ai/prediction
+Authorization: Bearer {{token}}
+
+### Add Revision Topic (Authenticated)
+POST http://127.0.0.1:8000/revision/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "topic": "Fundamental Rights",
+    "subject": "Indian Polity",
+    "quality": 4
+}
+
+### Update Revision Review (Authenticated)
+PUT http://127.0.0.1:8000/revision/test-topic-id/review
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "quality": 5
+}
+
+### Get Subscription Plans
+GET http://127.0.0.1:8000/subscription/plans
+
+### Get Subscription Status (Authenticated)
+GET http://127.0.0.1:8000/subscription/status
+Authorization: Bearer {{token}}
+
+### Subscribe (Authenticated)
+POST http://127.0.0.1:8000/subscription/subscribe
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "planId": "plan_pro",
+    "razorpayOrderId": "order_12345",
+    "razorpayPaymentId": "pay_12345"
+}
+
+### Get Offline Questions (Authenticated)
+GET http://127.0.0.1:8000/offline/questions?count=50
+Authorization: Bearer {{token}}
+
+### Offline Sync (Authenticated)
+POST http://127.0.0.1:8000/offline/sync
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "entity": "notes",
+    "payload": [{"id": "test-id", "title": "synced note"}]
+}
+
+### Get Daily Current Affairs (Authenticated)
+GET http://127.0.0.1:8000/current-affairs/daily
+Authorization: Bearer {{token}}
+
+### Get Monthly Current Affairs (Authenticated)
+GET http://127.0.0.1:8000/current-affairs/monthly
+Authorization: Bearer {{token}}
+
+### Get Current Affairs Quiz (Authenticated)
+GET http://127.0.0.1:8000/current-affairs/quiz?month=2024-06
+Authorization: Bearer {{token}}
+
+### Get Notification Preferences (Authenticated)
+GET http://127.0.0.1:8000/notifications/prefs
+Authorization: Bearer {{token}}
+
+### Update Notification Preferences (Authenticated)
+PUT http://127.0.0.1:8000/notifications/prefs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "studyReminder": true,
+    "studyReminderTime": "07:00"
+}
+
+### Get Admin Questions (Admin)
+GET http://127.0.0.1:8000/admin/questions
+Authorization: Bearer {{admin_token}}
+
+### Create Admin Question (Admin)
+POST http://127.0.0.1:8000/admin/questions
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+    "subject": "Indian Polity",
+    "difficulty": "medium",
+    "payload": {
+        "Ques": "What is the significance of Article 14?",
+        "Option1": "Right to equality",
+        "Option2": "Right to freedom",
+        "Option3": "Right to property",
+        "Option4": "Right to work",
+        "Option5": "Right to education",
+        "Ans": "Option1"
+    }
+}
+
+### Delete Admin Question (Admin)
+DELETE http://127.0.0.1:8000/admin/questions/test-question-id
+Authorization: Bearer {{admin_token}}
+
+### Get Admin User Stats (Admin)
+GET http://127.0.0.1:8000/admin/users/stats
+Authorization: Bearer {{admin_token}}
+
+### Get Admin Analytics (Admin)
+GET http://127.0.0.1:8000/admin/analytics
+Authorization: Bearer {{admin_token}}
